@@ -1,18 +1,31 @@
+use clap::{Parser, Subcommand};
 use std::env;
 use std::fs;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    Init,
+}
 
 fn main() {
     println!("Logs");
 
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
 
-    if args[1] == "init" {
-        fs::create_dir(".git").unwrap();
-        fs::create_dir(".git/objects").unwrap();
-        fs::create_dir(".git/refs").unwrap();
-        fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
-        println!("Git directory initialised");
-    } else {
-        println!("Unknown command: {}", args[1]);
+    match args.command {
+        Command::Init => {
+            fs::create_dir(".git").unwrap();
+            fs::create_dir(".git/objects").unwrap();
+            fs::create_dir(".git/refs").unwrap();
+            fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
+            println!("Git directory initialised");
+        }
     }
 }
