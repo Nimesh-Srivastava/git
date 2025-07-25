@@ -78,25 +78,21 @@ fn main() -> anyhow::Result<()> {
             };
 
             let size = size
-                .parse::<usize>()
+                .parse::<u64>()
                 .context(".git/objects file header has invalid size: {size}")?;
 
-            buf.clear();
-            buf.resize(size, 0);
-            z.read_exact(&mut buf[..])
-                .context("read true contents of .git/objects file")?;
-            let n = z
-                .read(&mut [0])
-                .context("validate EOF in .git/objects file")?;
-            anyhow::ensure!(n == 0, ".git/objects file has {n} trailing bytes");
-
-            let stdout = std::io::stdout();
-            let mut stdout = stdout.lock();
-
+            let mut z = z.take(size);
             match kind {
-                Kind::Blob => stdout
-                    .write_all(&buf)
-                    .context("write object contents to stdout")?,
+                Kind::Blob => {
+                    let stdout = std::io::stdout();
+                    let mut stdout = stdout.lock();
+                    let n = std::io::copy(&mut z, &mut stdout)
+                        .context("write .git/objects file to stdout")?;
+                    anyhow::ensure!(
+                        n == size,
+                        ".git/objects file size: {n} does not match expected size: {size}"
+                    );
+                }
             }
         }
     }
