@@ -1,1 +1,5 @@
 /target
+
+# temp directories and files
+temporary
+*.temp
